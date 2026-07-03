@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from datetime import timedelta
 from random import randint
 from typing import TYPE_CHECKING
 
@@ -34,7 +35,7 @@ async def workflow(ctx: Context, record_id: str, offset: int) -> None:
     print(f"processing record {record_id} in position {offset}")
     while await ctx.run(delete_batch, record_id):
         print(f"record {record_id} still has rows to delete")
-        await ctx.sleep(5)
+        await ctx.sleep(timedelta(seconds=5))
     print(f"all rows deleted for record {record_id} in position {offset}")
     await ctx.run(enqueue, record_id, offset)
 
@@ -67,7 +68,7 @@ def consume(r: Resonate) -> None:
         consumer.close()
 
 
-async def main() -> None:
+async def _main() -> None:
     r = Resonate(
         url=os.environ.get("RESONATE_URL", "http://localhost:8001"),
         group="record-deletor-group",
@@ -79,5 +80,9 @@ async def main() -> None:
     consume(r)
 
 
+def main() -> None:
+    asyncio.run(_main())
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
